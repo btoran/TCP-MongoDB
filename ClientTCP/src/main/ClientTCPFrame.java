@@ -107,6 +107,8 @@ public class ClientTCPFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     
+    
+    //Function to convert decimal to Hex
 
     public static String decimal2Hex(int decimal) {
         
@@ -117,6 +119,7 @@ public class ClientTCPFrame extends javax.swing.JFrame {
         
     }
     
+    //Function to generate random number
     
     public static int randMessage(int min, int max) {
 
@@ -177,7 +180,10 @@ public class ClientTCPFrame extends javax.swing.JFrame {
     private void generateMessageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateMessageButtonActionPerformed
         
         
+        
         String randomMessage = "";
+        
+        //We generate the 16 first random bytes
         
         for (int i=0; i<16; i++){
             
@@ -191,6 +197,7 @@ public class ClientTCPFrame extends javax.swing.JFrame {
             
         }
         
+        //We generate the temperature random bytes ( Values between 30 and 50)
         for (int i=0; i<1; i++){
             
            int degrees = randMessage(30, 50);
@@ -200,6 +207,8 @@ public class ClientTCPFrame extends javax.swing.JFrame {
            randomMessage = randomMessage + Hex;
             
         }
+        
+        //I think that always end at "00" because we use LittleEndian
         
          randomMessage = randomMessage + "00";
         
