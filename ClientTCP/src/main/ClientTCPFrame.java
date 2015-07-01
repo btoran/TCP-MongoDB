@@ -12,10 +12,13 @@ package main;
 
 import java.io.*;
 import java.net.*;
+import java.util.Random;
 
 
 public class ClientTCPFrame extends javax.swing.JFrame {
 
+    
+    
     /**
      * Creates new form ClientTCPFrame
      */
@@ -36,6 +39,7 @@ public class ClientTCPFrame extends javax.swing.JFrame {
         HxLbl = new javax.swing.JLabel();
         messageTxt = new javax.swing.JTextField();
         sendButton = new javax.swing.JButton();
+        generateMessageButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -43,10 +47,21 @@ public class ClientTCPFrame extends javax.swing.JFrame {
 
         HxLbl.setText("0x");
 
+        messageTxt.setEditable(false);
+        messageTxt.setEnabled(false);
+
         sendButton.setText("Send Message");
+        sendButton.setEnabled(false);
         sendButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 sendButtonActionPerformed(evt);
+            }
+        });
+
+        generateMessageButton.setText("Generate Random Message");
+        generateMessageButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                generateMessageButtonActionPerformed(evt);
             }
         });
 
@@ -57,16 +72,21 @@ public class ClientTCPFrame extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(123, 123, 123)
-                        .addComponent(messageLbl))
-                    .addGroup(layout.createSequentialGroup()
                         .addGap(86, 86, 86)
                         .addComponent(HxLbl)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(sendButton)
-                            .addComponent(messageTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 170, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(122, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(messageTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 311, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(generateMessageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(82, 82, 82)
+                                .addComponent(sendButton))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(192, 192, 192)
+                        .addComponent(messageLbl)))
+                .addContainerGap(67, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -76,15 +96,42 @@ public class ClientTCPFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(HxLbl)
-                    .addComponent(messageTxt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(messageTxt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(generateMessageButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(sendButton)
-                .addContainerGap(141, Short.MAX_VALUE))
+                .addContainerGap(139, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
+
+    public static String decimal2Hex(int decimal) {
+        
+    
+        
+         return Integer.toHexString(decimal);
+        
+        
+    }
+    
+    
+    public static int randMessage(int min, int max) {
+
+    
+  
+    Random rand = new Random();
+
+    // nextInt is normally exclusive of the top value,
+    // so add 1 to make it inclusive
+    int randomNum = rand.nextInt((max - min) + 1) + min;
+
+    return randomNum;
+}
+    
+    
     private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
        
         Socket socket;
@@ -92,37 +139,75 @@ public class ClientTCPFrame extends javax.swing.JFrame {
    
         
        
-        String message="";
+        String message="";  //Variable that contains the message
+        
+        
         
       
- try {
+        try {
 
- socket = new Socket("127.0.0.1",6000); //localhost and port 6000
+                socket = new Socket("127.0.0.1",6000); //connection at localhost and port 6000
  
-//"out" is a DataOutputStream object that will serve us to send data to server
- DataOutputStream out =
- new DataOutputStream(socket.getOutputStream());
+                //"out" is a DataOutputStream object that will serve us to send data to server
+                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
  
-
+                 //Get the message oh the textbox
+                message = messageTxt.getText();
  
- 
- message = messageTxt.getText();
+                //We send the encripted message
+                out.writeUTF(message); 
 
- out.writeUTF(message); //We send the encripted message
- 
- messageTxt.setText("");
+                 //Clean the textBox
+                messageTxt.setText("");
 
- } 
+            } 
 
- catch (Exception e) {
+        catch (Exception e) {
 
- System.err.println(e.getMessage());
- System.exit(1);
- }
+                System.err.println(e.getMessage());
+                System.exit(1);
+            }
+        
+        sendButton.setEnabled(false);
         
         
         
     }//GEN-LAST:event_sendButtonActionPerformed
+
+    private void generateMessageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateMessageButtonActionPerformed
+        
+        
+        String randomMessage = "";
+        
+        for (int i=0; i<16; i++){
+            
+           int degrees = randMessage(17, 255);
+           
+           String Hex = decimal2Hex(degrees);
+           
+           System.out.println(i + "." + Hex);
+           
+           randomMessage = randomMessage + Hex;
+            
+        }
+        
+        for (int i=0; i<1; i++){
+            
+           int degrees = randMessage(30, 50);
+           
+           String Hex = decimal2Hex(degrees);
+           
+           randomMessage = randomMessage + Hex;
+            
+        }
+        
+         randomMessage = randomMessage + "00";
+        
+        messageTxt.setText(randomMessage);
+        sendButton.setEnabled(true);
+        
+        
+    }//GEN-LAST:event_generateMessageButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -161,6 +246,7 @@ public class ClientTCPFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel HxLbl;
+    private javax.swing.JButton generateMessageButton;
     private javax.swing.JLabel messageLbl;
     private javax.swing.JTextField messageTxt;
     private javax.swing.JButton sendButton;
