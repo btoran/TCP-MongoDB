@@ -28,14 +28,19 @@ import java.util.logging.Logger;
 public class ServerTCP {
 
     
-        static String message; //Variable to store the client´s messages
+        static String message  = ""; //Variable to store the client´s messages
         static String idHx = ""; // Id Hex (I leave it so because he is not specified to be otherwise)
         static String temperatureHx = ""; // Temperatue Hex
         static int temperatureDegree = 0; // Temperature decimal
         static String temperatureDegreeString = ""; //Temperature string
+        static String date; //Current Date
+        static ServerSocket socket = null; // ServerSocket object for TCP communication 
         
         
         
+        
+        
+       
         
         //function that converts hex to decimal
         
@@ -51,94 +56,110 @@ public class ServerTCP {
              return val;
          }
     
-    public static void main(String[] args) {
-        
-        
-            DB db;
-            DBCollection collection = null;
-        
-            
-           //We initialize local MongoDB
-            
-            try {
-                
-                 Mongo mongo = new Mongo("localhost",27017);
-                 db=mongo.getDB("TCPMongoDB"); 
-                 collection = db.getCollection("tiles");
-            } catch (UnknownHostException ex) {
-                Logger.getLogger(ServerTCP.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            
-        
-            ServerSocket socket; // ServerSocket object for communication
-        
-        
+    
+         //function that recieve and decode message  
+    
+    public static void recieveData() throws IOException {
+             
+             /*We create a socket_client to put the content of the socket object after execute the "accept" function
+             to get the client connections*/
+
+
+            Socket socket_client = socket.accept();
            
-            try {
 
-                  //We indicate the communication port
+            //"in" is a DataInputStream object that will serve us to receive data from the client
 
-                   socket = new ServerSocket(6000);
+            DataInputStream in =
+            new DataInputStream(socket_client.getInputStream());
 
-                    do{ 
+
+            message="";
+            message = in.readUTF(); //we recieve the message
+
+            temperatureDegree = getTemperature(message);
+            idHx = getId(message);
+            date = getCurrentDate(message);
+            
+            
+
+         }
+    
+    
+    
+    
+    public static int getTemperature(String messageRecieved) {
+        
+            //The temperature Hex is the last four digits of the message
+
+             String tempHex = messageRecieved.substring(32, 36);
+
+            //We changne the bytes order of the TemperatureHx beacuse it is LittleEndian
+            String aux = tempHex.substring(0,2);
+            String aux2 = tempHex.substring(2,4);
+            tempHex = aux2 + aux;
+
+            //We convert TemperatureHx in Decimal
+            int tempDegree = hex2decimal(tempHex);
+            System.out.println("La temperatura es: " + tempDegree);
+            
+             
+            
+            return tempDegree;
+             
+         }
+    
+    
+    public static String getId(String messageRecieved) {
+        
+            //The Id Hex ate the first 32 digits of the message
+            String idHex = message.substring(0,32);
+
+            
+            return idHex;
+            
+            
+             
+         }
+    
+     public static String getCurrentDate(String messageRecieved) {
+        
+            String currentDate = message.substring(36, 55);
+            return currentDate;
+             
+         }
+    
+    
+    
+    public static void main(String[] args) throws IOException {
+        
+        
+
+            
+            //We initialize local MongoDB (ip,port,DBname,CollectionName)
+        
+            DataBase.initMongoDB("localhost",27017,"TCPMongoDB", "tiles");
+
+            //We indicate the communication port
+                
+            socket = new ServerSocket(6000);
+            
+       
+            //We always listen to the client
+            
+             do{ 
                 
                 
-                            /*We create a socket_client to put the content of the socket object after execute the "accept" function
-                             to get the client connections*/
+                            recieveData();
+                            DataBase.insertData(idHx, temperatureDegree,date);
 
+                         
 
-                            Socket socket_client = socket.accept();
-
-
-
-                            //"in" is a DataInputStream object that will serve us to receive data from the client
-
-                            DataInputStream in =
-                            new DataInputStream(socket_client.getInputStream());
-
-
-                            message="";
-                            message = in.readUTF(); //we recieve the message
-
-
-                            //The temperature Hex is the last four digits of the message
-
-                            temperatureHx = message.substring(32, 36);
-
-                            //The Id Hex ate the first 32 digits of the message
-                            idHx = message.substring(0,32);
-
-                            //We changne the bytes order of the TemperatureHx beacuse it is LittleEndian
-                            String aux = temperatureHx.substring(0,2);
-                            String aux2 = temperatureHx.substring(2,4);
-                            temperatureHx = aux2 + aux;
-
-                            //We convert TemperatureHx in Decimal
-                            temperatureDegree = hex2decimal(temperatureHx);
-                            System.out.println("La temperatura es: " + temperatureDegree);
-
-                            //We insert the Id and Temperature in MongoDB. 
-                            BasicDBObject document = new BasicDBObject();
-                            document.put("ID_Hx", "'" +idHx + "'");
-                            document.put("Temperature", temperatureDegree);
-
-
-                            collection.insert(document);
-
-
-                       }while (!"fin".equals(message));       
-                   } 
-          
-            catch (Exception e) {
+             }while (1>0);       
 
        
-            System.err.println(e.getMessage());
-            
             }
 
-
             }
-
-               }
     
 

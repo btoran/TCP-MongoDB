@@ -12,11 +12,18 @@ package main;
 
 import java.io.*;
 import java.net.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 public class ClientTCPFrame extends javax.swing.JFrame {
 
+    
+   
+    static Socket socket;
     
     
     /**
@@ -24,6 +31,9 @@ public class ClientTCPFrame extends javax.swing.JFrame {
      */
     public ClientTCPFrame() {
         initComponents();
+        generateTemperatureButton.setEnabled(false);
+        messageTxt.setEnabled(false);
+        sendMessageButton.setEnabled(false);
     }
 
     /**
@@ -37,9 +47,10 @@ public class ClientTCPFrame extends javax.swing.JFrame {
 
         messageLbl = new javax.swing.JLabel();
         HxLbl = new javax.swing.JLabel();
+        generateTemperatureButton = new javax.swing.JButton();
+        sendMessageButton = new javax.swing.JButton();
         messageTxt = new javax.swing.JTextField();
-        sendButton = new javax.swing.JButton();
-        generateMessageButton = new javax.swing.JButton();
+        newTileButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -47,21 +58,24 @@ public class ClientTCPFrame extends javax.swing.JFrame {
 
         HxLbl.setText("0x");
 
-        messageTxt.setEditable(false);
-        messageTxt.setEnabled(false);
-
-        sendButton.setText("Send Message");
-        sendButton.setEnabled(false);
-        sendButton.addActionListener(new java.awt.event.ActionListener() {
+        generateTemperatureButton.setText("Generate new Temperature");
+        generateTemperatureButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                sendButtonActionPerformed(evt);
+                generateTemperatureButtonActionPerformed(evt);
             }
         });
 
-        generateMessageButton.setText("Generate Random Message");
-        generateMessageButton.addActionListener(new java.awt.event.ActionListener() {
+        sendMessageButton.setText("Send Data");
+        sendMessageButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                generateMessageButtonActionPerformed(evt);
+                sendMessageButtonActionPerformed(evt);
+            }
+        });
+
+        newTileButton.setText("NEW TILE");
+        newTileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                newTileButtonActionPerformed(evt);
             }
         });
 
@@ -70,42 +84,94 @@ public class ClientTCPFrame extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap(83, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(86, 86, 86)
                         .addComponent(HxLbl)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(messageTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 311, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(generateMessageButton, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(162, 162, 162)
+                                .addComponent(sendMessageButton))
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(82, 82, 82)
-                                .addComponent(sendButton))))
+                                .addGap(7, 7, 7)
+                                .addComponent(messageTxt, javax.swing.GroupLayout.PREFERRED_SIZE, 301, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(21, 21, 21)
+                                .addComponent(generateTemperatureButton, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE))))
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(192, 192, 192)
+                        .addGap(106, 106, 106)
                         .addComponent(messageLbl)))
-                .addContainerGap(67, Short.MAX_VALUE))
+                .addGap(70, 70, 70))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(280, 280, 280)
+                .addComponent(newTileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(68, 68, 68)
+                .addGap(30, 30, 30)
+                .addComponent(newTileButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 75, Short.MAX_VALUE)
                 .addComponent(messageLbl)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(HxLbl)
-                    .addComponent(messageTxt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(generateMessageButton))
+                    .addComponent(generateTemperatureButton)
+                    .addComponent(messageTxt, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(sendButton)
-                .addContainerGap(139, Short.MAX_VALUE))
+                .addComponent(sendMessageButton)
+                .addGap(55, 55, 55))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
+    
+     public static String generateRandomId(int numBytes) {
+
+         String idTile = "";
+         
+         for (int i=0; i<numBytes; i++){
+            
+           int degrees = randMessage(17, 255);
+           
+           String Hex = decimal2Hex(degrees);
+           
+           
+           idTile = idTile + Hex;
+           
+         }
+         
+         return idTile;
+          
+         
+}
+     
+     public static String generateRandomTemperature() {
+
+        
+         String temperatureTile = "";
+         
+         
+    //We generate the temperature random bytes ( Values between 30 and 50)
+        for (int i=0; i<1; i++){
+            
+           int degrees = randMessage(30, 50);
+           
+           String Hex = decimal2Hex(degrees);
+           
+           temperatureTile = temperatureTile + Hex;
+            
+        }
+        
+        //I think that always end at "00" because we use LittleEndian
+        
+         temperatureTile = temperatureTile + "00";
+         
+         return temperatureTile;
+         
+}
     
     
     //Function to convert decimal to Hex
@@ -135,20 +201,12 @@ public class ClientTCPFrame extends javax.swing.JFrame {
 }
     
     
-    private void sendButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendButtonActionPerformed
-       
-        Socket socket;
-        
-   
-        
-       
-        String message="";  //Variable that contains the message
-        
-        
-        
-      
-        try {
+    public void sendData() throws IOException {
 
+    
+  
+                String message;  //Variable that contains the message
+        
                 socket = new Socket("127.0.0.1",6000); //connection at localhost and port 6000
  
                 //"out" is a DataOutputStream object that will serve us to send data to server
@@ -156,67 +214,84 @@ public class ClientTCPFrame extends javax.swing.JFrame {
  
                  //Get the message oh the textbox
                 message = messageTxt.getText();
+                
+                //Get the current day
+                
+                String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date());
+                
+                message = message + date;
+                
+                
  
                 //We send the encripted message
                 out.writeUTF(message); 
+                
+                
 
-                 //Clean the textBox
-                messageTxt.setText("");
+                
 
-            } 
 
-        catch (Exception e) {
+    
+}
+    
+    
+    private void generateTemperatureButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateTemperatureButtonActionPerformed
+        
+        
+        
+        
+        String actualMessage = messageTxt.getText();
+        
+        
+        String newTemperature = generateRandomTemperature();
+        
+        actualMessage = actualMessage.replace(actualMessage.substring(32,36), newTemperature);
+        
+        
+   
+        messageTxt.setText(actualMessage);
+        sendMessageButton.setEnabled(true);
+        
+        
+        
+        
+        
+        
+    }//GEN-LAST:event_generateTemperatureButtonActionPerformed
 
-                System.err.println(e.getMessage());
-                System.exit(1);
-            }
-        
-        sendButton.setEnabled(false);
+    private void sendMessageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sendMessageButtonActionPerformed
+          
         
         
-        
-    }//GEN-LAST:event_sendButtonActionPerformed
-
-    private void generateMessageButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_generateMessageButtonActionPerformed
-        
-        
-        
-        String randomMessage = "";
-        
-        //We generate the 16 first random bytes
-        
-        for (int i=0; i<16; i++){
-            
-           int degrees = randMessage(17, 255);
-           
-           String Hex = decimal2Hex(degrees);
-           
-           System.out.println(i + "." + Hex);
-           
-           randomMessage = randomMessage + Hex;
-            
+        try {
+            sendData();
+        } catch (IOException ex) {
+            Logger.getLogger(ClientTCPFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        //We generate the temperature random bytes ( Values between 30 and 50)
-        for (int i=0; i<1; i++){
-            
-           int degrees = randMessage(30, 50);
-           
-           String Hex = decimal2Hex(degrees);
-           
-           randomMessage = randomMessage + Hex;
-            
-        }
+        generateTemperatureButton.setEnabled(false);
+        sendMessageButton.setEnabled(false);
+   
         
-        //I think that always end at "00" because we use LittleEndian
+       
         
-         randomMessage = randomMessage + "00";
+    }//GEN-LAST:event_sendMessageButtonActionPerformed
+
+    private void newTileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newTileButtonActionPerformed
         
-        messageTxt.setText(randomMessage);
-        sendButton.setEnabled(true);
+        String actualMessage = "";
         
+        actualMessage = generateRandomId(16);
+        actualMessage = actualMessage + generateRandomTemperature();
         
-    }//GEN-LAST:event_generateMessageButtonActionPerformed
+ 
+        
+        messageTxt.setText(actualMessage);
+        
+        generateTemperatureButton.setEnabled(true);
+        sendMessageButton.setEnabled(true);
+        
+    }//GEN-LAST:event_newTileButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -255,9 +330,10 @@ public class ClientTCPFrame extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel HxLbl;
-    private javax.swing.JButton generateMessageButton;
+    private javax.swing.JButton generateTemperatureButton;
     private javax.swing.JLabel messageLbl;
     private javax.swing.JTextField messageTxt;
-    private javax.swing.JButton sendButton;
+    private javax.swing.JButton newTileButton;
+    private javax.swing.JButton sendMessageButton;
     // End of variables declaration//GEN-END:variables
 }
